@@ -1,0 +1,632 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Api extends CI_Controller {
+	public function __construct()
+	{
+		header('Access-Control-Allow-Origin: *');
+		header("Access-Control-Allow-Methods: GET, OPTIONS");
+		parent::__construct();
+	}
+	
+	public function index()
+	{
+		if($this->input->post())
+		{
+			$data = $this->input->post();
+			extract($data);
+			switch($action)
+			{
+				case 'login':
+				$this->login();
+				break;
+				case 'auto_login':
+				$this->auto_login();
+				break;
+				case 'load_table':
+				$this->load_table();
+				break;
+				case 'generate_row':
+				$this->generate_row();
+				break;
+				case 'save_center':
+				$this->save_center();
+				break;
+				case 'update_user':
+				$this->update_user();
+				break;
+				case 'save_me':
+				$this->save_me();
+				break;
+				case 'update_me':
+				$this->update_me();
+				break;
+				case 'upload_images':
+				$this->upload_images();
+				break;
+				case 'delete_data':
+				$this->delete_data();
+				break;
+				case 'get_semester':
+				$this->get_semester();
+				break;
+				case 'get_result':
+				$this->get_result();
+				break;
+				case'session_gen':
+				$this->session_gen();
+				break;
+				case 'check_duplicate':
+				$this->check_duplicate();
+				break;
+				case 'change_password':
+				$this->change_password();
+				break;
+				case 'reset_password':
+				$this->reset_password();
+				break;
+				case 'logout':
+				$this->logout();
+				break;
+				default:
+				echo json_encode(array('status'=>'error','message'=>'Sorry! Action Not Found'));
+				
+			}
+		}
+		else 
+		{
+			echo "Access Denied";
+		 }
+	}
+	private function login()
+	{
+		$res = $this->Offer_model->login();
+		if($res==1)
+		{
+			$token = $this->session->userdata('token_id')['my_api'];
+			$user_id = $this->session->userdata('token_id')['login_id'];
+			$user_type = $this->session->userdata('token_id')['user_type'];
+			echo json_encode(array('status'=>'success','message'=>'Wow! Login Success','user_id'=>$user_id,'user_type'=>$user_type,'token'=>$token));
+		}
+		else if($res==2)
+		{
+			echo json_encode(array('status'=>'error','message'=>'Sorry! Your ID has been blocked'));
+		}
+		else 
+		{
+			echo json_encode(array('status'=>'error','message'=>'Sorry!  Please Check Your Mobile No. & Password'));
+		}
+	}
+	private function auto_login()
+	{
+		extract($this->input->post());
+		$res = count($this->Offer_model->select_all('user',"id='$id' and my_api='$token'"));
+		if($res==1)
+		{
+			echo json_encode(array('status'=>'success','message'=>'Wow! Login Success','user_id'=>$id,'token'=>$token));
+		}
+		else
+		{
+			echo json_encode(array('status'=>'error','message'=>'Sorry! Token Expired. Login Again'));
+		}
+	}
+	private function generate_row()
+	{
+		extract($this->input->post());
+		$res = $this->Offer_model->check_api();
+		if($res)
+		{	
+			$id = $res['id'];
+			$val = $this->Offer_model->check_empty($table);
+			if($val)
+			{
+				echo json_encode(array('status'=>'success','id'=>$val));
+			}
+			else 
+			{
+				$dt = date('Y-m-d h:i:s');
+				$resp = $this->Offer_model->save_data($table,array('status'=>'EMPTY','created_by'=>$id,'created_at'=>$dt));
+				if($resp==1)
+				{
+					$last_id = $this->db->insert_id();
+					echo json_encode(array('status'=>'success','id'=>$last_id));
+				}
+				else {
+					echo json_encode(array('status'=>'error','message'=>$resp['message']));
+				}
+			}
+			
+		}
+		else {
+			echo json_encode(array('status'=>'error','message'=>'Sorry! Unauthorized Access Found.'));
+		}
+	}
+	private function save_center()
+	{
+		extract($this->input->post());
+		$res = $this->Offer_model->check_api();
+		if($res)
+		{	
+			$user_type = $res['user_type'];	
+			$id = $res['id'];
+			$clean_data = $this->Offer_model->clean_data();
+			$save_res = $this->Offer_model->update_data($table,$clean_data,$dataId);
+			if($save_res==1)
+			{
+				$password = rand(100000,1000000);
+				extract($clean_data);
+				$user_arr = array('center_id'=>$dataId,'user_mobile'=>$center_mobile,'user_name'=>$center_code,'user_email'=>$center_email,'user_type'=>'CLIENT','status'=>'ACTIVE','user_password'=>$password,'created_by'=>$created_by,'created_at'=>$updated_at);
+				$resp = $this->Offer_model->save_data('user',$user_arr,$dataId);
+				if($resp==1)
+				{
+					$last_row = $this->Offer_model->data_table_json($table,'center_code','status',"id='$dataId'");
+					echo json_encode(array('status'=>'success','message'=>'Data Saved Successfully','data'=>$last_row,'location'=>'NA'));
+				}
+				else 
+				{
+					echo json_encode(array('status'=>'error','message'=>$resp['message']));
+				}
+			}
+			else 
+			{
+				echo json_encode(array('status'=>'error','message'=>$save_res['message']));
+			}
+		}
+		else 
+		{
+			echo json_encode(array('status'=>'error','message'=>'Sorry! Unauthorized Access Found.'));
+		}
+	}
+	
+/*-----------------------------------------------Saving any Data------------------*/
+	
+	private function update_me()
+	{
+		extract($this->input->post());
+		$res = $this->Offer_model->check_api();
+		if($res)
+		{	
+			$clean_data = post_clean($this->Offer_model->clean_data());
+			$update_res = $this->Offer_model->update_data($table,$clean_data,$dataId);
+			$last = $this->db->last_query();
+			if($update_res==1)
+			{
+				echo json_encode(array('status'=>'success','message'=>'Data Saved Successfully','data'=>'','location'=>'NA'));
+			}
+			else 
+			{
+				echo json_encode(array('status'=>'error','message'=>$update_res['message'],'location'=>'NA'));
+			}
+		}
+		else 
+		{
+			echo json_encode(array('status'=>'error','message'=>'Sorry! Unauthorized Access Found.'));
+		}
+	}
+	/*-----------------------------------------------End Saving any Data------------------*/
+
+	private function load_table()
+	{
+		extract($this->input->post());
+		$res = $this->Offer_model->check_api();
+		if($res)
+		{	
+			$user_type = $res['user_type'];	
+			$id = $res['id'];
+			$login_id = $id;
+			switch($table)
+			{
+			 case 'center_details':				 /*------------------------------------------------------*/
+					if($user_type=='ADMIN')
+					{	
+						$records = $this->Offer_model->data_table_json($table,"center_code","status","status NOT IN('removed','EMPTY')");	
+					}
+					else 
+					{
+						$records = $this->Offer_model->data_table_json($table,"center_code","status", "status NOT IN('EMPTY','removed')");	
+					}
+					echo json_encode(array('status'=>'success','data'=>$records));
+				break;
+				case 'user':				 /*------------------------------------------------------*/
+					if($user_type=='ADMIN')
+					{	
+						$records = $this->Offer_model->data_table_json($table,"user_name","status","status NOT IN('removed','EMPTY')");	
+					}
+					else 
+					{
+						echo json_encode(array('status'=>'error','message'=>'Sorry! Unauthorized Access Found.'));
+						//$records = $this->Offer_model->data_table_json($table,"center_code","status", "status NOT IN('EMPTY','removed')");	
+					}
+					echo json_encode(array('status'=>'success','data'=>$records));
+				break;
+				case 'module':				 /*------------------------------------------------------*/
+					if($user_type=='ADMIN')
+					{	
+						$records = $this->Offer_model->data_table_json($table,"module_name","status","status NOT IN('removed','EMPTY')");	
+					}
+					else 
+					{
+						echo json_encode(array('status'=>'error','message'=>'Sorry! Unauthorized Access Found.'));
+						//$records = $this->Offer_model->data_table_json($table,"center_code","status", "status NOT IN('EMPTY','removed')");	
+					}
+					echo json_encode(array('status'=>'success','data'=>$records));
+				break;
+				case 'course_details':				 /*------------------------------------------------------*/
+					if($user_type=='ADMIN')
+					{	
+						$records = $this->Offer_model->data_table_json($table,"course_code","course_syllabus","status NOT IN('removed','EMPTY')");	
+					}
+					else 
+					{
+						echo json_encode(array('status'=>'error','message'=>'Sorry! Unauthorized Access Found.'));
+						//$records = $this->Offer_model->data_table_json($table,"center_code","status", "status NOT IN('EMPTY','removed')");	
+					}
+					if(count($records)>0)
+						{
+							$replaced_records = $this->Offer_model->add_syllabus($records);
+						}
+						else 
+						{
+							$replaced_records = array();
+						}
+					echo json_encode(array('status'=>'success','data'=>$replaced_records));
+				break;
+				case 'student':				 /*------------------------------------------------------*/
+					if($user_type=='ADMIN')
+					{	
+						$records = $this->Offer_model->data_table_json($table,"center_id","grade","status NOT IN('removed','EMPTY')");	
+					}
+					else 
+					{
+						$center_id = $this->Offer_model->multitableinfo('user',"id='$login_id'",'center_id');
+						$records = $this->Offer_model->data_table_json($table,"center_id","grade", "center_id='$center_id' and status NOT IN('EMPTY','removed')");	
+					}
+						if(count($records)>0)
+						{
+							$rep_arr = [array('table'=>'center_details','rep_index'=>1,'field'=>'center_name'),
+							array('table'=>'course_details','rep_index'=>2,'field'=>'course_code')];
+							$replaced_records = $this->Offer_model-> replace_arr($records,$rep_arr);
+						}
+						else 
+						{
+							$replaced_records = array();
+						}
+					echo json_encode(array('status'=>'success','data'=>$replaced_records));
+				break;
+				case 'result':				 /*------------------------------------------------------*/
+					if($user_type=='ADMIN')
+					{	
+						$records = $this->Offer_model->get_result_data('result',"student_id","remarks","status NOT IN('removed','EMPTY')");
+					}
+					else 
+					{
+						$records = $this->Offer_model->data_table_json($table,"student_id","remarks", "status NOT IN('EMPTY','removed')");	
+					}
+					// $records = $this->Offer_model->data_table_json('student',"center_id","grade","status NOT IN('removed','EMPTY')");
+					$rep_arr = [array('table'=>'student','rep_index'=>1,'field'=>'student_name'),];
+			
+					$replaced_records = $this->Offer_model-> replace_arr($records,$rep_arr);
+					echo json_encode(array('status'=>'success','data'=>$replaced_records));
+				break;
+
+
+				case 'gallery':				 /*------------------------------------------------------*/
+					if($user_type=='ADMIN')
+					{	
+						$records = $this->Offer_model->data_table_json($table,"image_title","status","status NOT IN('removed','EMPTY')");	
+					}
+					else 
+					{
+						echo json_encode(array('status'=>'error','message'=>'Sorry! Unauthorized Access Found.'));
+					}
+				
+					echo json_encode(array('status'=>'success','data'=>$records));
+				break;
+
+				case 'enquiry':				 /*------------------------------------------------------*/
+					if($user_type=='ADMIN')
+					{	
+						$records = $this->Offer_model->data_table_json($table,"e_name","e_datetime","status NOT IN('removed','EMPTY')");	
+					}
+					else 
+					{
+						$records = $this->Offer_model->data_table_json($table,"e_name","e_datetime","status NOT IN('removed','EMPTY')");	
+					}
+					// $records = $this->Offer_model->data_table_json('student',"center_id","grade","status NOT IN('removed','EMPTY')");
+					//$rep_arr = [array('table'=>'student','rep_index'=>1,'field'=>'student_name'),];
+			
+					//$replaced_records = $this->Offer_model-> replace_arr($records,$rep_arr);
+					echo json_encode(array('status'=>'success','data'=>$records));
+				break;
+
+			}
+		}
+		else
+		{
+			echo json_encode(array('status'=>'error','message'=>'Sorry! Unauthorized Access Found.'));
+		}
+	}
+	
+	private function upload_images()
+	{
+		extract($this->input->post());
+		$res = $this->Offer_model->check_api();
+		if($res)
+		{	
+				$data = extract(post_clean($this->input->post()));
+				$clean_data = $this->Offer_model->clean_data($data);
+				$clean_file = post_clean($_FILES);
+				$file_name =  array_keys($clean_file)[0];
+				$res = $this->Offer_model->upload_files_only($file_name,$dataId);
+				if($res['status']==1)
+				{
+					$array_data = array($file_name=>$res['file_name']);
+					$this->Offer_model->update_data($table,array($file_name=>''),$dataId);
+					$resp = $this->Offer_model->update_data($table,$array_data,$dataId);
+					if($resp==1)
+					{
+						echo json_encode(array('status'=>'success','message'=>ucwords($category).' Uploaded Successfully.','data'=>$res['file_name']));
+					}
+					else {
+						echo json_encode(array('status'=>'error','message'=>$resp['message']));
+					}
+
+				}
+			
+		}
+		else
+		{
+			echo json_encode(array('status'=>'error','message'=>'Sorry! Unauthorized Access Found.'));
+		}
+	}
+	private function delete_data()
+	{
+		extract($this->input->post());
+		$res = $this->Offer_model->check_api();
+		if($res)
+		{	
+			foreach($dataId as $id)
+			{
+				$res = $this->Offer_model->delete_really($table,$id);
+			}
+			if($res==1)
+			{
+				echo json_encode(array('status'=>'success','message'=>'Data Deleted Successfully'));
+			}
+			else
+			{
+				echo json_encode(array('status'=>'error','message'=>$res['message']));
+			}
+		}
+		else 
+		{
+			echo json_encode(array('status'=>'error','message'=>'Sorry! Unauthorized Access Found.'));
+		}
+	}
+	private function get_semester()
+	{
+		extract(post_clean($this->input->post()));
+		$res = $this->Offer_model->check_api();
+		if($res)
+		{
+			$course_id = $this->Offer_model->multitableinfo('student',"id='$dataId'","course_id");
+			$sem = $this->Offer_model->multitableinfo('course_details',"id='$course_id'","no_of_semester");
+			echo "<option value=''>Select Exam Name</option>";
+			for($i=1;$i<=$sem;$i++)
+			{
+				echo " <option value='semester $i'>Semester $i</option>";
+			}
+
+			
+		}
+		else 
+		{
+			echo json_encode(array('status'=>'error','message'=>'Sorry! Unauthorized Access Found.'));
+		}	
+	}
+	private function get_result()
+	{
+		extract(post_clean($this->input->post()));
+		$res = $this->Offer_model->check_api();
+		if($res)
+		{
+			$result_data = $this->Offer_model->select_all('result',"student_id='$dataId' and exam_name='$exam_name'");
+			if(count($result_data)>0)
+			{
+				echo json_encode(array('status'=>'success','data'=>$result_data[0]));
+			}
+			else {
+				$dt = date('Y-m-d');
+				$new_arr = array('student_id'=>$dataId,'exam_name'=>$exam_name,'status'=>'EMPTY','created_by'=>$res['id'],'created_at'=>$dt);
+				$resp = $this->Offer_model->save_data('result',$new_arr);
+				if($resp==1)
+				{
+					$id = $this->db->insert_id();
+					$result_data = $this->Offer_model->select_all('result',"id='$id' and student_id='$dataId' and exam_name='$exam_name'");
+					echo json_encode(array('status'=>'success','data'=>$result_data[0]));
+				}
+				else {
+					echo json_encode(array('status'=>'error','message'=>$resp['message']));
+				}
+			}
+			
+			
+		}
+		else 
+		{
+			echo json_encode(array('status'=>'error','message'=>'Sorry! Unauthorized Access Found.'));
+		}	
+	}
+	private function session_gen()
+	{
+		extract($this->input->post());
+		$res1 = $this->Offer_model->check_api();
+		if($res1)
+		{
+			$_SESSION[$dataName]=array($idName=>$dataId,'data_token'=>$token);
+			
+			if(($_SESSION[$dataName])<>'')
+			{
+				echo json_encode(array('status'=>'success','message'=>$dataName.' session generated successfully'));
+			}
+			else 
+			{
+				echo json_encode(array('status'=>'error','message'=>$dataName.' session generation error'));
+			}
+		}
+	}
+	private function check_duplicate()
+	{
+		extract($this->input->post());
+		$res = $this->Offer_model->check_api();
+		if($res)
+		{
+			
+			$res = $this->Offer_model->getarray($table,array($field_name=>$value,'status'=>'ACTIVE'));
+			
+			 if($res)
+			 {
+			     if($table=='result'){
+			         
+			         $check = $this->check_center($res[0]['student_id']);
+			         if($check){
+			             echo json_encode(array('status'=>'error','message'=>'Duplicate entry found'));
+			         }else {
+			             echo json_encode(array('status'=>'success','message'=>'No duplicate entry found'));
+			         }
+			         
+			     }else {
+			         
+			         if($res[0]['id']<>$dataId)
+    				{
+    					echo json_encode(array('status'=>'error','message'=>'Duplicate entry found'));
+    				}
+    				else 
+    				{
+    					echo json_encode(array('status'=>'success','message'=>'No duplicate entry found'));
+    				}
+			     }
+			 }
+			 else {
+				echo json_encode(array('status'=>'success','message'=>'No duplicate entry found'));
+			 }
+		}
+	}
+	/*----------------------------------------Changing Password-------------------------*/
+	private function change_password()
+	{
+		extract($this->input->post());
+		$res = $this->Offer_model->check_api();
+		if($res)
+		{	
+			$dataId = $res['id'];
+			$prev_password = $this->Offer_model->multitableinfo('user',"id='$dataId'",'user_password');
+
+			if($current_password==$prev_password)
+			{
+					$update_res = $this->Offer_model->update_data($table,array('user_password'=>$confirm_password),$dataId);
+					if($update_res==1)
+					{
+						echo json_encode(array('status'=>'success','message'=>'Wow! Password Changed Successfully','location'=>'NA'));
+					}
+					else 
+					{
+						echo json_encode(array('status'=>'error','message'=>$update_res['message'],'location'=>'NA'));
+					}
+			}
+			else 
+			{
+				echo json_encode(array('status'=>'error','message'=>'Sorry! Current Password is incorrect'));
+			}
+		}
+		else 
+		{
+			echo json_encode(array('status'=>'error','message'=>'Sorry! Unauthorized Access Found.'));
+		}	
+	}
+	private function reset_password()
+	{
+		$data = post_clean($this->input->post());
+		extract($data);
+		$res = $this->Offer_model->check_user('user',$user_mobile);
+		if($res==1)
+		{
+			$resp = $this->Offer_model->select_all('user',"user_mobile='$user_mobile'");
+			if($resp)
+			{
+				$row = $resp[0];
+				if(($row->status)=='BLOCKED')
+				{
+					echo json_encode(array('status'=>'error','message'=>'Sorry! Your ID has been blocked by Admin'));
+				}
+				else 
+				{
+					$message =$row->user_password.' is your login password for '.config('sc_code');
+					//sendsms($user_mobile,$message);
+					$noreply = config('noreply');
+					$user_email = $row->user_email;
+					//mail($user_email,'Reset Password For Brainware Login',$message,$noreply);
+					echo json_encode(array('status'=>'success','message'=>'Kindly check your mobile & email for password'));
+				}
+			}
+		
+		}
+		else 
+		{
+			echo json_encode(array('status'=>'error','message'=>'Sorry! No record found. Check your mobile no.'));
+		}
+	}
+	private function logout()
+	{
+		// extract($this->input->post());
+		 //$res = $this->Offer_model->check_api();
+		 $token = $this->session->userdata('token_id');
+				$id = $token['login_id'];
+		// if($res)
+		// {
+			$res2 = $this->Offer_model->update_data('user',array('my_api'=>'','status'=>'LOGOUT','updated_at'=>date('Y-m-d h:i:s'),'updated_by'=>$id),$id);
+			//$res2 = $this->Offer_model->update_data('user',array('my_api'=>'','status'=>'LOGOUT','updated_at'=>date('Y-m-d h:i:s'),'updated_by'=>$res['id']),$res['id']);
+			if($res2==1)
+			{
+				
+				$data = array('status'=>'LOGOUT','login_token'=>'');
+				$this->Offer_model->update_data('branch',$data,$id);
+				$this->session->unset_userdata('login_token');
+				$this->session->sess_destroy();
+				echo json_encode(array('status'=>'success','message'=>'Wow! Logged Out Successfully'));
+			}
+			else 
+			{
+				echo json_encode(array('status'=>'error','message'=>'Sorry! Something Went Wrong. Try Again'));
+			}
+		// }
+		// else{
+		// 	echo json_encode(array('status'=>'error','message'=>'Sorry! Unauthorized Access Foundor Token Expired'));
+		// }
+	}
+	private function check_center($old_student_id){
+	    $sql = "select * from result where status='EMPTY' order by id desc";
+	    $res = $this->Offer_model->direct_sql($sql);
+	    if(!empty($res)){
+	        $new_student_id = $res[0]['student_id'];
+	        $new_center_data = $this->Offer_model->direct_sql("select center_id from student where id='$new_student_id'");
+	        $new_center_id = $new_center_data[0]['center_id'];
+	        
+	        $old_center_data = $this->Offer_model->direct_sql("select center_id from student where id='$old_student_id'");
+	        $old_center_id = $old_center_data[0]['center_id'];
+	        if($new_center_id==$old_center_id){
+	            return true;
+	        }else {
+	            return false;
+	        }
+	        
+	    }else{
+	        return false;
+	    }
+	    
+	}
+	public function check_this()
+	{
+        //$this->check_center(48);
+	}
+}

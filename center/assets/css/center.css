@@ -1,0 +1,265 @@
+/* ==========================================================================
+   Brainware Center / Branch Portal - Compact High-Density Stylesheet
+   Theme: Professional Blue & Red
+   ========================================================================== */
+
+:root {
+  /* Center Portal Palette */
+  --center-sidebar-bg: #06132d;       /* Deep Navy */
+  --center-sidebar-hover: #10244f;
+  --center-sidebar-active: #2563eb;
+  
+  --primary-blue: #1e3a8a;
+  --primary-blue-light: #2563eb;
+  --primary-blue-soft: #eff6ff;
+  
+  --primary-red: #dc2626;
+  --primary-red-soft: #fef2f2;
+  
+  --bg-center: #f8fafc;
+  --bg-card: #ffffff;
+  --border-color: #e2e8f0;
+  
+  --text-dark: #06132d;
+  --text-body: #334155;
+  --text-muted: #64748b;
+  
+  --sidebar-width: 255px;
+  --topbar-height: 60px;
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0; padding: 0;
+}
+
+html {
+  font-size: 14.5px;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-center);
+  color: var(--text-body);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+a {
+  color: var(--primary-blue-light);
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.center-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Center Sidebar */
+.center-sidebar {
+  width: var(--sidebar-width);
+  background-color: var(--center-sidebar-bg);
+  color: #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; bottom: 0; left: 0;
+  z-index: 1000;
+  transition: var(--transition);
+  border-right: 1px solid #10244f;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+}
+
+.center-sidebar-brand {
+  height: var(--topbar-height);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 1.35rem;
+  background: #030a1c;
+  border-bottom: 2px solid var(--primary-blue-light);
+  text-decoration: none;
+}
+.center-brand-badge {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-red) 100%);
+  color: #fff;
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 1.2rem;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+}
+.center-brand-text {
+  font-size: 1.15rem; font-weight: 800; color: #fff;
+}
+.center-brand-text span {
+  color: #93c5fd;
+}
+
+.center-sidebar-menu {
+  list-style: none;
+  padding: 1rem 0.75rem;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.center-sidebar-heading {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.85px;
+  color: #93c5fd;
+  font-weight: 700;
+  padding: 0.85rem 0.75rem 0.35rem;
+  opacity: 0.85;
+}
+.center-sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  color: #cbd5e1;
+  font-weight: 600;
+  font-size: 0.86rem;
+  border-radius: var(--radius-md);
+  transition: var(--transition);
+}
+.center-sidebar-link:hover {
+  background-color: var(--center-sidebar-hover);
+  color: #ffffff;
+  transform: translateX(2px);
+}
+.center-sidebar-link.active {
+  background: linear-gradient(135deg, var(--primary-blue-light) 0%, #1e40af 100%);
+  color: #ffffff;
+  font-weight: 700;
+  border-left: 3px solid var(--primary-red);
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+}
+.center-sidebar-link i {
+  width: 20px; text-align: center; font-size: 1rem;
+}
+
+/* Center Main Area */
+.center-main {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  transition: var(--transition);
+}
+
+.center-topbar {
+  height: var(--topbar-height);
+  background-color: #ffffff;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky; top: 0;
+  z-index: 900;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.center-content-body {
+  padding: 1.75rem 2rem;
+  flex: 1;
+}
+
+.center-banner {
+  background: linear-gradient(135deg, #1e3a8a 0%, #0b152d 100%);
+  color: #ffffff;
+  border-radius: var(--radius-lg);
+  padding: 1.75rem 2rem;
+  margin-bottom: 1.75rem;
+  border-left: 5px solid var(--primary-red);
+  box-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.15);
+}
+
+.center-footer {
+  background: #ffffff;
+  border-top: 1px solid var(--border-color);
+  padding: 0.85rem 1.75rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+@media (max-width: 992px) {
+  .center-sidebar {
+    transform: translateX(-100%);
+    box-shadow: 0 0 35px rgba(0, 0, 0, 0.5);
+  }
+  .center-sidebar.show {
+    transform: translateX(0);
+  }
+  .center-main {
+    margin-left: 0;
+  }
+  .center-content-body {
+    padding: 1.25rem 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .center-topbar {
+    padding: 0 1rem;
+  }
+  .center-banner {
+    padding: 1.25rem;
+  }
+  .center-footer {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+}
+
+/* Center Table Styles */
+.admin-table-card {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+.admin-table th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.5px;
+  padding: 0.65rem 0.95rem;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+.admin-table td {
+  padding: 0.65rem 0.95rem;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+.admin-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+

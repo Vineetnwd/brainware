@@ -1,0 +1,26 @@
+# Brainware Academy .htaccess Configuration
+DirectoryIndex index.php index.html
+
+# Prevent Directory Listing
+Options -Indexes
+
+# Follow Symbolic Links
+Options +FollowSymLinks
+
+# Set Default Charset
+AddDefaultCharset UTF-8
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Block access to hidden files and sensitive database files
+    RewriteRule (^|/)\.(?!well-known) - [F]
+    RewriteRule \.(sql|env|ini|log|sh|bak)$ - [F]
+</IfModule>
+
+# Security Headers (where supported)
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>
